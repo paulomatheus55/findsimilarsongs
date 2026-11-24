@@ -1,5 +1,6 @@
 // ===== FUNÇÃO PARA FALAR COM O DEEZER =====
 
+// Um contador para dar um nome diferente a cada pedido
 let contador = 0;
 
 function deezer(caminho) {
@@ -35,11 +36,11 @@ function deezer(caminho) {
   });
 }
 
-
-// ===== PEGAR OS ELEMENTOS DA PÁGINA =====
+// Pegar os elementos do HTML
 const campo = document.getElementById("busca");
 const listaResultados = document.getElementById("resultados");
 const mensagem = document.getElementById("status");
+const areaEscolhida = document.getElementById("escolhida");
 
 // Cria um elemento HTML
 function criar(tag, atributos = {}, texto = "") {
@@ -49,7 +50,7 @@ function criar(tag, atributos = {}, texto = "") {
   return elemento;
 }
 
-// ===== BUSCA =====
+// Busca com atraso: espera 400ms após o usuário parar de digitar para fazer a busca
 let espera;
 
 campo.addEventListener("input", () => {
@@ -57,6 +58,7 @@ campo.addEventListener("input", () => {
   espera = setTimeout(buscar, 400);
 });
 
+// Formatação do termo de busca: remove espaços em excesso e o traço entre o nome da música e o artista
 async function buscar() {
   const termo = campo.value.replace(/\s[-–—]\s/g, " ").trim();
 
@@ -91,4 +93,18 @@ async function buscar() {
   } catch (erro) {
     mensagem.textContent = "Não consegui buscar agora. Verifique a internet e tente de novo.";
   }
+}
+
+// Música escolhida
+function escolher(faixa) {
+  listaResultados.replaceChildren();
+
+  const disco = criar("div", { className: "disco" });
+  disco.append(criar("img", { src: faixa.album.cover_medium, alt: "" }));
+
+  const textos = criar("div");
+  textos.append(criar("h2", {}, faixa.title), criar("p", {}, faixa.artist.name));
+
+  areaEscolhida.replaceChildren(disco, textos);
+  areaEscolhida.hidden = false;
 }
