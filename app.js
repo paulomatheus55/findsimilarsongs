@@ -34,3 +34,61 @@ function deezer(caminho) {
     }, 8000);
   });
 }
+
+
+// ===== PEGAR OS ELEMENTOS DA PÁGINA =====
+const campo = document.getElementById("busca");
+const listaResultados = document.getElementById("resultados");
+const mensagem = document.getElementById("status");
+
+// Cria um elemento HTML
+function criar(tag, atributos = {}, texto = "") {
+  const elemento = document.createElement(tag);
+  Object.assign(elemento, atributos);
+  if (texto) elemento.textContent = texto;
+  return elemento;
+}
+
+// ===== BUSCA =====
+let espera;
+
+campo.addEventListener("input", () => {
+  clearTimeout(espera);
+  espera = setTimeout(buscar, 400);
+});
+
+async function buscar() {
+  const termo = campo.value.replace(/\s[-–—]\s/g, " ").trim();
+
+  listaResultados.replaceChildren();
+  if (termo.length < 2) {
+    mensagem.textContent = "";
+    return;
+  }
+
+  try {
+    const dados = await deezer(`/search?q=${encodeURIComponent(termo)}&limit=8`);
+
+    if (!dados.data || dados.data.length === 0) {
+      mensagem.textContent = "Nenhuma música encontrada. Tente outro nome.";
+      return;
+    }
+
+    mensagem.textContent = "";
+
+    dados.data.forEach((faixa) => {
+      const textos = criar("div", {}, faixa.title);
+      textos.append(criar("small", {}, faixa.artist.name));
+
+      const botao = criar("button", { type: "button" });
+      botao.append(criar("img", { src: faixa.album.cover_small, alt: "" }), textos);
+      botao.addEventListener("click", () => escolher(faixa));
+
+      const item = criar("li");
+      item.append(botao);
+      listaResultados.append(item);
+    });
+  } catch (erro) {
+    mensagem.textContent = "Não consegui buscar agora. Verifique a internet e tente de novo.";
+  }
+}
