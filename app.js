@@ -36,11 +36,11 @@ function deezer(caminho) {
   });
 }
 
-// Pegar os elementos do HTML
 const campo = document.getElementById("busca");
 const listaResultados = document.getElementById("resultados");
 const mensagem = document.getElementById("status");
 const areaEscolhida = document.getElementById("escolhida");
+const areaSugestoes = document.getElementById("sugestoes");
 
 // Cria um elemento HTML
 function criar(tag, atributos = {}, texto = "") {
@@ -50,7 +50,7 @@ function criar(tag, atributos = {}, texto = "") {
   return elemento;
 }
 
-// Busca com atraso: espera 400ms após o usuário parar de digitar para fazer a busca
+// Busca
 let espera;
 
 campo.addEventListener("input", () => {
@@ -58,7 +58,6 @@ campo.addEventListener("input", () => {
   espera = setTimeout(buscar, 400);
 });
 
-// Formatação do termo de busca: remove espaços em excesso e o traço entre o nome da música e o artista
 async function buscar() {
   const termo = campo.value.replace(/\s[-–—]\s/g, " ").trim();
 
@@ -95,9 +94,10 @@ async function buscar() {
   }
 }
 
-// Música escolhida
-function escolher(faixa) {
+// Música escolhida e busca de sugestões
+async function escolher(faixa) {
   listaResultados.replaceChildren();
+  areaSugestoes.replaceChildren();
 
   const disco = criar("div", { className: "disco" });
   disco.append(criar("img", { src: faixa.album.cover_medium, alt: "" }));
@@ -107,4 +107,47 @@ function escolher(faixa) {
 
   areaEscolhida.replaceChildren(disco, textos);
   areaEscolhida.hidden = false;
+  mensagem.textContent = "Procurando músicas parecidas...";
+
+  try {
+    // Artistas parecidos com o artista da música escolhida
+    const parecidos = await deezer(`/artist/${faixa.artist.id}/related?limit=6`);
+
+    if (!parecidos.data || parecidos.data.length === 0) {
+      mensagem.textContent = "Não encontrei artistas parecidos para essa música.";
+      return;
+    }
+
+    // As 2 músicas mais populares de cada artista parecido
+    const respostas = await Promise.all(
+      parecidos.data.map((artista) =>
+        deezer(`/artist/${artista.id}/top?limit=2`)
+          .then((r) => r.data || [])
+          .catch(() => [])
+      )
+    );
+
+    // Junta tudo, tira repetidas, a própria música e as sem prévia
+    const vistas = new Set([faixa.id]);
+    const sugestoes = respostas.flat().filter((f) => {
+      if (!f.preview || vistas.has(f.id)) return false;
+      vistas.add(f.id);
+      return true;
+    });
+
+    if (sugestoes.length === 0) {
+      mensagem.textContent = "Achei artistas parecidos, mas sem músicas disponíveis.";
+      return;
+    }
+
+    mensagem.textContent = "Músicas parecidas:";
+    sugestoes.forEach(criarCard);
+  } catch (erro) {
+    mensagem.textContent = "Algo deu errado ao buscar as sugestões. Tente de novo em instantes.";
+  }
+}
+
+// PROVISÓRIO: no Módulo 7 vamos trocar isto pelo card de verdade
+function criarCard(faixa) {
+  areaSugestoes.append(criar("p", {}, faixa.title + " - " + faixa.artist.name));
 }
