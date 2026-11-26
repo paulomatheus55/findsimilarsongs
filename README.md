@@ -2,7 +2,7 @@
 
 Site para descobrir músicas parecidas: busque uma música, escolha uma na lista e ouça prévias de 30 segundos de sugestões, sem sair da página.
 
-**Site:** https://SEU-USUARIO.github.io/findsimilarsongs/
+**Site:** https://github.com/paulomatheus55/musicas-parecidas.git
 
 ## Como funciona
 
