@@ -94,7 +94,7 @@ async function buscar() {
   }
 }
 
-// Música escolhida e busca de sugestões
+  // Música escolhida e busca de sugestões
 async function escolher(faixa) {
   pararAudio();
   listaResultados.replaceChildren();
