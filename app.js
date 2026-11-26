@@ -96,6 +96,7 @@ async function buscar() {
 
 // Música escolhida e busca de sugestões
 async function escolher(faixa) {
+  pararAudio();
   listaResultados.replaceChildren();
   areaSugestoes.replaceChildren();
 
@@ -147,7 +148,42 @@ async function escolher(faixa) {
   }
 }
 
-// PROVISÓRIO: no Módulo 7 vamos trocar isto pelo card de verdade
+// Estado do player
+let audio = null;
+let botaoAtivo = null;
+
+function pararAudio() {
+  if (audio) audio.pause();
+  if (botaoAtivo) {
+    botaoAtivo.textContent = "Ouvir prévia";
+    botaoAtivo.classList.remove("Tocando");
+  }
+  audio = null;
+  botaoAtivo = null;
+}
+
 function criarCard(faixa) {
-  areaSugestoes.append(criar("p", {}, faixa.title + " - " + faixa.artist.name));
+  const botao = criar("button", { type: "button" }, "Ouvir prévia");
+
+  botao.addEventListener("click", () => {
+    const eraEsse = botaoAtivo === botao;
+    pararAudio();
+    if (eraEsse) return;
+
+    audio = new Audio(faixa.preview);
+    audio.play().catch(pararAudio);
+    audio.addEventListener("ended", pararAudio);
+    botao.textContent = "Pausar";
+    botao.classList.add("Tocando");
+    botaoAtivo = botao;
+  });
+
+  const card = criar("article", { className: "card" });
+  card.append(
+    criar("img", { src: faixa.album.cover_medium, alt: `Capa de ${faixa.album.title}` }),
+    criar("h3", {}, faixa.title),
+    criar("p", {}, faixa.artist.name),
+    botao
+  );
+  areaSugestoes.append(card);
 }
